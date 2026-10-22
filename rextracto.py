@@ -42,6 +42,7 @@ rextracto: pick text from the pane with fzf. Type a few keys to fuzzy match.
   {edit_key:<8} type `$EDITOR -- selection` into the pane
 
 Filters come from rextracto.conf; add your own in ~/.config/rextracto/rextracto.conf.
+Ctrl-F order (filter_order): {filters}
 """
 
 
@@ -367,9 +368,23 @@ def selection_text(mode, selection):
     return ("\n" if mode == "line" else " ").join(selection_entries(mode, selection))
 
 
+def filter_modes(filter_order, configs=None):
+    """The filters Ctrl-F cycles through, checked before fzf opens."""
+    modes = filter_order.split()
+    if not modes:
+        raise ExtraktoException("filter_order is empty; give it filter names such as 'word all line'")
+    known = {"all", "line", *Extrakto(configs=configs).keys()}
+    unknown = [mode for mode in modes if mode not in known]
+    if unknown:
+        raise ExtraktoException(
+            f"unknown filter in filter_order: {', '.join(unknown)} (known: {' '.join(sorted(known))})"
+        )
+    return modes
+
+
 def pick(options):
     session, block = options.session, options.block
-    modes = options.filter_order.split()
+    modes = filter_modes(options.filter_order)
     mode, grab_area, query = modes[0], options.grab_area, ""
     single_pane = len(window_blocks(session, block)) == 1
     if single_pane and grab_area.startswith("window "):
@@ -385,7 +400,11 @@ def pick(options):
         elif key == options.grab_key:
             grab_area = next_grab_area(grab_area, single_pane, original_grab_area)
         elif key == options.help_key:
-            subprocess.run(["less", "-+EF", "-R"], input=HELP.format(recent=RECENT_LINES, **vars(options)), text=True)
+            subprocess.run(
+                ["less", "-+EF", "-R"],
+                input=HELP.format(recent=RECENT_LINES, filters=" ".join(modes), **vars(options)),
+                text=True,
+            )
         elif not value or key in ("esc", "ctrl-c", ""):
             return 0
         elif key == options.copy_key:
