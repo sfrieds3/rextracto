@@ -170,7 +170,7 @@ class PickTests(unittest.TestCase):
                 extrakto, "block_call", side_effect=lambda *args: self.calls.append(("block_call",) + args)
             ),
             mock.patch.object(extrakto, "copy_text", side_effect=lambda *args: self.calls.append(("copy",) + args)),
-            mock.patch.object(extrakto, "open_text", side_effect=lambda *args: self.calls.append(("open",) + args)),
+            mock.patch.object(extrakto, "open_entries", side_effect=lambda *args: self.calls.append(("open",) + args)),
             mock.patch.object(extrakto, "block_cwd", return_value="/tmp"),
         ]
         for patch in patches:
@@ -227,7 +227,7 @@ class PickTests(unittest.TestCase):
 
     def test_open_uses_pane_directory(self):
         self.pick([("ctrl-o", ["https://example.com/x"])])
-        self.assertEqual(self.calls[-1], ("open", "https://example.com/x", None, "/tmp"))
+        self.assertEqual(self.calls[-1], ("open", ["https://example.com/x"], None, "/tmp"))
 
     def test_all_mode_strips_names(self):
         self.pick([("ctrl-f", []), ("enter", ["url: https://example.com/x"])])
