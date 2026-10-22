@@ -13,7 +13,7 @@ class GrabCycleTests(unittest.TestCase):
     def cycle(self, start, single_pane, steps):
         area, seen = start, [start]
         for _ in range(steps):
-            area = rextracto.next_grab_area(area, single_pane)
+            area = rextracto.next_grab_area(area, single_pane, start)
             seen.append(area)
         return seen
 
