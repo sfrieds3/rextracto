@@ -323,7 +323,6 @@ def run_fzf(options, items, query, mode, grab_area):
         "--tiebreak=index",
         f"--layout={options.fzf_layout}",
         "--no-info",
-        "--ansi",
     ]
     result = subprocess.run(command, input="\n".join(items) + "\n", stdout=subprocess.PIPE, text=True, env=env)
     lines = result.stdout.split("\n")
