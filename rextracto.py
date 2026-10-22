@@ -332,10 +332,13 @@ def run_fzf(options, items, query, mode, grab_area):
     return lines[0], lines[1], [line for line in lines[2:] if line]
 
 
+def selection_entries(mode, selection):
+    """The selected entries, without the filter labels that the all mode shows."""
+    return [entry.split(": ", 1)[-1] for entry in selection] if mode == "all" else list(selection)
+
+
 def selection_text(mode, selection):
-    if mode == "all":
-        return " ".join(entry.split(": ", 1)[-1] for entry in selection)
-    return ("\n" if mode == "line" else " ").join(selection)
+    return ("\n" if mode == "line" else " ").join(selection_entries(mode, selection))
 
 
 def pick(options):
@@ -369,11 +372,20 @@ def pick(options):
             return 0
         elif key == options.edit_key:
             editor = options.editor or os.environ.get("EDITOR") or "vi"
-            line = f"{editor} -- {' '.join(shlex.quote(entry) for entry in value.split(chr(10)))}\r"
-            block_call(session, block, "write", {"data": line})
+            words = " ".join(shell_word(entry) for entry in selection_entries(mode, selection))
+            block_call(session, block, "write", {"data": f"{editor} -- {words}\r"})
             return 0
         else:
             return 0
+
+
+def shell_word(entry):
+    """ENTRY quoted for the pane's shell, leaving a leading ~/ outside the quotes so the shell expands it."""
+    if entry == "~":
+        return entry
+    if entry.startswith("~/"):
+        return "~/" + shlex.quote(entry[2:]) if entry[2:] else "~/"
+    return shlex.quote(entry)
 
 
 def parse_args(argv):
