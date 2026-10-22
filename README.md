@@ -20,7 +20,7 @@ Fuzzy-pick text from your terminal in [Rex](https://www.superlogical.com/rex). r
 - Filters: `word`, `all` (URLs, paths, quotes and so on, each labelled), `line`, and any you define. Ctrl-F switches between them.
 - Grab areas: the screen plus recent history, all scrollback, or every pane in the tab. Ctrl-G switches between them.
 - Newest matches come first, with duplicates removed. Shift-Tab picks several.
-- Insert uses a Rex paste event, so bracketed paste works. Copying uses `pbcopy`, `wl-copy` or `xclip`, falling back to OSC 52.
+- Insert uses a Rex paste event, so bracketed paste works. Copying uses `pbcopy`, or `wl-copy` or `xclip` when `WAYLAND_DISPLAY` or `DISPLAY` is set, and falls back to OSC 52.
 - Filters use extrakto's `extrakto.conf` format, so an existing `~/.config/extrakto/extrakto.conf` keeps working.
 
 ## Requirements
@@ -117,7 +117,7 @@ require("rextracto").setup({
 | `grab_area` | `window full` | Area to start in. |
 | `filter_order` | `word all line` | Filters Ctrl-F cycles through; the first is where it starts. |
 | `min_length` | `5` | Shortest entry to list. |
-| `clip_tool` | `pbcopy`, `wl-copy` or `xclip`, then OSC 52 | Shell command that copies its stdin. |
+| `clip_tool` | `pbcopy`; `wl-copy` or `xclip` with a display; then OSC 52 | Shell command that copies its stdin. |
 | `open_tool` | `open` or `xdg-open` | Opener command. |
 | `editor` | `$EDITOR`, then `vi` | Editor typed by Ctrl-E. |
 | `fzf_tool` | `fzf` | fzf command, with any extra flags. |

@@ -8,6 +8,7 @@ The filter engine and rextracto.conf come from extrakto (MIT, Christian Zangl).
 """
 
 import argparse
+import base64
 import json
 import os
 import re
@@ -241,9 +242,17 @@ def next_grab_area(area, single_pane):
     return order[(order.index(area) + 1) % len(order)] if area in order else order[0]
 
 
+OSC52_SETTLE = 0.1
+
+
+def run_clipboard(command, text, shell=False):
+    # wl-copy and xclip stay alive to serve the selection; their own session keeps the pane's hangup from killing them.
+    subprocess.run(command, shell=shell, input=text, text=True, check=False, start_new_session=True)
+
+
 def copy_text(text, clip_tool=None):
     if clip_tool:
-        subprocess.run(clip_tool, shell=True, input=text, text=True, check=False)
+        run_clipboard(clip_tool, text, shell=True)
         return
     for tool in (
         ["pbcopy"],
@@ -251,12 +260,13 @@ def copy_text(text, clip_tool=None):
         ["xclip", "-selection", "clipboard"] if os.environ.get("DISPLAY") else None,
     ):
         if tool and shutil.which(tool[0]):
-            subprocess.run(tool, input=text, text=True, check=False)
+            run_clipboard(tool, text)
             return
-    import base64
-
     with open("/dev/tty", "w") as tty_out:
         tty_out.write("\x1b]52;c;" + base64.b64encode(text.encode()).decode() + "\a")
+        tty_out.flush()
+    # The pane closes when this script exits; give Rex a moment to read the sequence first.
+    time.sleep(OSC52_SETTLE)
 
 
 def block_cwd(session, block):
