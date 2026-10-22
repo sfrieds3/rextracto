@@ -46,8 +46,14 @@ same(
   }
 )
 
--- Running from a checkout, the module finds its own root.
-same(rextracto.command_for({}, "s", "b"), { "python3", "./rextracto.py", "s", "b" })
+-- Loaded by a relative path, the module can't know its root and asks for one.
+local ok, err = pcall(rextracto.command_for, {}, "s", "b")
+assert(not ok and err:find("pass root"), "a relative load needs root")
+
+-- Loaded by an absolute path, the module finds its own root.
+local checkout = assert(os.getenv("PWD"), "run from the repository root")
+local absolute = dofile(checkout .. "/lua/rextracto.lua")
+same(absolute.command_for({}, "s", "b"), { "python3", checkout .. "/rextracto.py", "s", "b" })
 
 rextracto.setup({ root = "/r" })
 local action = assert(defined.rextracto, "setup defines the rextracto action")

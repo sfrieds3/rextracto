@@ -1,9 +1,9 @@
 -- rextracto: extrakto for Rex. See README.md for setup.
 local M = {}
 
--- Rex may load this without a file name, so setup also takes the checkout as opts.root.
-local source = debug.getinfo(1, "S").source or ""
-local default_root = source:match("^@(.*)/lua/[^/]*$") or (source:match("^@lua/[^/]*$") and ".")
+-- Rex may load this without a file name, so setup also takes the checkout as opts.root. Only an absolute
+-- module path gives a usable root: a relative one would resolve against the new pane's directory.
+local default_root = (debug.getinfo(1, "S").source or ""):match("^@(/.*)/lua/[^/]*$")
 
 -- Options that only the Lua side reads; the rest become the script's long flags (_ becomes -).
 local lua_only = { action = true, python = true, bounds = true, root = true }
