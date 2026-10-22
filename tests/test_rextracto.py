@@ -90,10 +90,10 @@ class ExtractTests(unittest.TestCase):
 
 class GrabAreaTests(unittest.TestCase):
     def test_cycle(self):
-        self.assertEqual(extrakto.next_grab_area("recent", False), "window recent")
-        self.assertEqual(extrakto.next_grab_area("window full", False), "recent")
-        self.assertEqual(extrakto.next_grab_area("full", True), "recent")
-        self.assertEqual(extrakto.next_grab_area("window full", True), "recent")
+        self.assertEqual(extrakto.next_grab_area("recent", False, "recent"), "window recent")
+        self.assertEqual(extrakto.next_grab_area("window full", False, "recent"), "recent")
+        self.assertEqual(extrakto.next_grab_area("full", True, "full"), "recent")
+        self.assertEqual(extrakto.next_grab_area("recent", True, "full"), "full")
 
 
 VIEW = {
@@ -139,18 +139,18 @@ class CaptureTests(unittest.TestCase):
             return {"content": content} if method == "format" else {"rows": 5}
 
         with mock.patch.object(extrakto, "block_call", side_effect=block_call):
-            recent = extrakto.capture_block("session:a", "block:b", True).split("\n")
+            recent = extrakto.capture_block("session:a", "block:b", 10).split("\n")
             self.assertEqual(recent[0], "line 85")
             self.assertEqual(recent[-1], "line 99")
-            self.assertEqual(extrakto.capture_block("session:a", "block:b", False), content)
+            self.assertEqual(extrakto.capture_block("session:a", "block:b", None), content)
 
     def test_window_capture_puts_target_last(self):
         with (
             mock.patch.object(extrakto, "window_blocks", return_value=["block:left", "block:b"]),
-            mock.patch.object(extrakto, "capture_block", side_effect=lambda s, block, recent: f"{block} {recent}"),
+            mock.patch.object(extrakto, "capture_block", side_effect=lambda s, block, history: f"{block} {history}"),
         ):
-            self.assertEqual(extrakto.capture("session:a", "block:b", "window recent"), "block:left True\nblock:b True")
-            self.assertEqual(extrakto.capture("session:a", "block:b", "full"), "block:b False")
+            self.assertEqual(extrakto.capture("session:a", "block:b", "window recent"), "block:left 10\nblock:b 10")
+            self.assertEqual(extrakto.capture("session:a", "block:b", "full"), "block:b None")
 
 
 class PickTests(unittest.TestCase):

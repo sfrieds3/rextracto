@@ -25,6 +25,7 @@ TIMEOUT = os.environ.get("REXTRACTO_TIMEOUT", "2s")
 USER_CONFIGS = ("~/.config/extrakto/extrakto.conf", "~/.config/rextracto/rextracto.conf")
 # In the order the grab key cycles through them, as in extrakto.
 GRAB_AREAS = ("recent", "window recent", "full", "window full")
+GRAB_AREA = re.compile(r"(window )?(recent|full|[0-9]+)")
 RECENT_LINES = 10
 HELP = """\
 rextracto: pick text from the pane with fzf. Type a few keys to fuzzy match.
@@ -222,24 +223,46 @@ def window_blocks(session, block):
     return [block]
 
 
-def capture_block(session, block, recent):
+def grab_area_type(value):
+    if not GRAB_AREA.fullmatch(value):
+        raise argparse.ArgumentTypeError(
+            f"{value!r} is not recent, full, a line count, or one of those after 'window '"
+        )
+    return value
+
+
+def history_lines(grab_area):
+    """Lines of history to take besides the screen, or None for all of it; a number is a line count, as in extrakto."""
+    size = grab_area.split()[-1]
+    return None if size == "full" else RECENT_LINES if size == "recent" else int(size)
+
+
+def capture_block(session, block, history):
     content = block_call(session, block, "format", {"unwrap": True, "trim": True}).get("content", "")
-    if not recent:
+    if history is None:
         return content
     rows = block_call(session, block, "size").get("rows") or 0
-    # Unwrapped lines can be fewer than screen rows; this keeps at least the screen and RECENT_LINES more.
-    return "\n".join(content.rstrip("\n").split("\n")[-(rows + RECENT_LINES) :])
+    # Unwrapped lines can be fewer than screen rows; this keeps at least the screen and HISTORY more.
+    return "\n".join(content.rstrip("\n").split("\n")[-(rows + history) :])
 
 
 def capture(session, block, grab_area):
     blocks = window_blocks(session, block) if grab_area.startswith("window ") else [block]
-    recent = grab_area.endswith("recent")
-    return "\n".join(capture_block(session, entry, recent) for entry in blocks)
+    return "\n".join(capture_block(session, entry, history_lines(grab_area)) for entry in blocks)
 
 
-def next_grab_area(area, single_pane):
-    order = [entry for entry in GRAB_AREAS if not (single_pane and entry.startswith("window "))]
-    return order[(order.index(area) + 1) % len(order)] if area in order else order[0]
+def next_grab_area(area, single_pane, original):
+    """extrakto's grab key: recent, window recent, full, window full, then back to a custom starting area."""
+    restart = original if original not in GRAB_AREAS else "recent"
+    if area == "recent":
+        return "full" if single_pane else "window recent"
+    if area == "window recent":
+        return "full"
+    if area == "full":
+        return restart if single_pane else "window full"
+    if area == "window full":
+        return restart
+    return "recent"
 
 
 def copy_text(text, clip_tool=None):
@@ -346,6 +369,7 @@ def pick(options):
     single_pane = len(window_blocks(session, block)) == 1
     if single_pane and grab_area.startswith("window "):
         grab_area = grab_area[len("window ") :]
+    original_grab_area = grab_area
     while True:
         text = capture(session, block, grab_area)
         items = extract(text, mode, min_length=options.min_length)
@@ -354,7 +378,7 @@ def pick(options):
         if key == options.filter_key:
             mode = modes[(modes.index(mode) + 1) % len(modes)]
         elif key == options.grab_key:
-            grab_area = next_grab_area(grab_area, single_pane)
+            grab_area = next_grab_area(grab_area, single_pane, original_grab_area)
         elif key == options.help_key:
             subprocess.run(["less", "-+EF", "-R"], input=HELP.format(recent=RECENT_LINES, **vars(options)), text=True)
         elif not value or key in ("esc", "ctrl-c", ""):
@@ -381,7 +405,7 @@ def parse_args(argv):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("session")
     parser.add_argument("block")
-    parser.add_argument("--grab-area", default="window full", choices=GRAB_AREAS)
+    parser.add_argument("--grab-area", default="window full", type=grab_area_type, metavar="AREA")
     parser.add_argument("--filter-order", default="word all line", help="filters ctrl-f cycles through")
     parser.add_argument("--min-length", default=5, type=int)
     parser.add_argument(

@@ -91,8 +91,9 @@ Only entries at least `min_length` characters long (5 by default) are listed.
 | `recent` | the screen and 10 lines of history |
 | `full` | all of the pane's scrollback |
 | `window recent`, `window full` | the same, plus the tab's other terminal panes |
+| `500`, `window 500` | the screen and that many lines of history (as `grab_area` only) |
 
-Ctrl-G cycles recent → window recent → full → window full, the same order as extrakto. With one pane in the tab it skips the `window` areas.
+Ctrl-G cycles recent → window recent → full → window full, the same order as extrakto. With one pane in the tab it skips the `window` areas. If `grab_area` is a line count, the cycle comes back to it after `window full`.
 
 ## Configuration
 
@@ -114,7 +115,7 @@ require("rextracto").setup({
 | `root` | | Checkout directory. Required: Rex doesn't give modules their file name. |
 | `action` | `rextracto` | Name of the action to define. Call `setup` twice for two variants. |
 | `bounds` | `{ 0.05, 0.05, 0.9, 0.9 }` | The popup as `{ x, y, width, height }` fractions of the window. |
-| `grab_area` | `window full` | Area to start in. |
+| `grab_area` | `window full` | Area to start in: a named area, `N` or `window N`. |
 | `filter_order` | `word all line` | Filters Ctrl-F cycles through; the first is where it starts. |
 | `min_length` | `5` | Shortest entry to list. |
 | `clip_tool` | `pbcopy`, `wl-copy` or `xclip`, then OSC 52 | Shell command that copies its stdin. |
