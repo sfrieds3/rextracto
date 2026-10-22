@@ -90,7 +90,7 @@ class ExtractTests(unittest.TestCase):
 
 class GrabAreaTests(unittest.TestCase):
     def test_cycle(self):
-        self.assertEqual(extrakto.next_grab_area("recent", False), "full")
+        self.assertEqual(extrakto.next_grab_area("recent", False), "window recent")
         self.assertEqual(extrakto.next_grab_area("window full", False), "recent")
         self.assertEqual(extrakto.next_grab_area("full", True), "recent")
         self.assertEqual(extrakto.next_grab_area("window full", True), "recent")

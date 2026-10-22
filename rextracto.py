@@ -23,14 +23,15 @@ SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 REX = os.environ.get("REX_BIN") or "rex"
 TIMEOUT = os.environ.get("REXTRACTO_TIMEOUT", "2s")
 USER_CONFIGS = ("~/.config/extrakto/extrakto.conf", "~/.config/rextracto/rextracto.conf")
-GRAB_AREAS = ("recent", "full", "window recent", "window full")
+# In the order the grab key cycles through them, as in extrakto.
+GRAB_AREAS = ("recent", "window recent", "full", "window full")
 RECENT_LINES = 10
 HELP = """\
 rextracto: pick text from the pane with fzf. Type a few keys to fuzzy match.
 
   {filter_key:<8} next filter: word (min length 5), all (quotes, urls, paths, ...), line, ...
-  {grab_key:<8} next grab area: recent (screen and {recent} lines of history), full,
-           window recent, window full (also the other panes in this tab)
+  {grab_key:<8} next grab area: recent (screen and {recent} lines of history), window recent
+           (also the other panes in this tab), full (all history), window full
   shift-tab select several entries
   esc      cancel
 

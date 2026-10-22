@@ -92,7 +92,7 @@ Only entries at least `min_length` characters long (5 by default) are listed.
 | `full` | all of the pane's scrollback |
 | `window recent`, `window full` | the same, plus the tab's other terminal panes |
 
-With one pane in the tab, Ctrl-G skips the `window` areas.
+Ctrl-G cycles recent → window recent → full → window full, the same order as extrakto. With one pane in the tab it skips the `window` areas.
 
 ## Configuration
 
