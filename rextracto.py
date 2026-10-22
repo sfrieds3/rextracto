@@ -267,15 +267,17 @@ def block_cwd(session, block):
         return None
 
 
-def open_text(text, open_tool, cwd):
+def open_entries(entries, open_tool, cwd):
+    """Open each entry on its own (xdg-open takes one argument), expanding ~ as a shell would."""
     command = shlex.split(open_tool) if open_tool else ["open" if sys.platform == "darwin" else "xdg-open"]
-    subprocess.Popen(
-        command + [text],
-        cwd=cwd if cwd and os.path.isdir(cwd) else None,
-        start_new_session=True,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
+    for entry in entries:
+        subprocess.Popen(
+            [*command, os.path.expanduser(entry)],
+            cwd=cwd if cwd and os.path.isdir(cwd) else None,
+            start_new_session=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
 
 
 # Picker
@@ -368,7 +370,7 @@ def pick(options):
             api("block.event", session_id=session, block_id=block, event={"type": "paste", "payload": {"text": value}})
             return 0
         elif key == options.open_key:
-            open_text(value, options.open_tool, block_cwd(session, block))
+            open_entries(selection_entries(mode, selection), options.open_tool, block_cwd(session, block))
             return 0
         elif key == options.edit_key:
             editor = options.editor or os.environ.get("EDITOR") or "vi"
